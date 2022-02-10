@@ -1,0 +1,22 @@
+---
+title: "austin_animal_shelter_adoption_analysis"
+author: "Nathan Funckes"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+```
+
+## Read Data
+
+```{r read data}
+
+data <- read_csv(here::here("data","austin_animal_adoption_data.csv"))
+
+data
+
+```
+
