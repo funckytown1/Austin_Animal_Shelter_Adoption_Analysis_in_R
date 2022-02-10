@@ -14,9 +14,24 @@ library(tidyverse)
 
 ```{r read data}
 
-data <- read_csv(here::here("data","austin_animal_adoption_data.csv"))
+intakes <- read_csv(here::here("data","Austin_Animal_Center_Intakes.csv"))
+outcomes <- read_csv(here::here("data","Austin_Animal_Center_Outcomes.csv"))
+```
+```{r remove entries not in both datasets}
 
-data
+
+```
+```{r combine datasets}
+
 
 ```
 
+
+
+```{r make data tidy}
+
+
+```
+
+
+Is it possible to predict an animals outcome type based on the data that an adoption center can verify when intaking an animal?
