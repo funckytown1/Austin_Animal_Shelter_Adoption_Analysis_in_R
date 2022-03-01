@@ -17,20 +17,25 @@ library(tidyverse)
 intakes <- read_csv(here::here("data","Austin_Animal_Center_Intakes.csv"))
 outcomes <- read_csv(here::here("data","Austin_Animal_Center_Outcomes.csv"))
 ```
-```{r remove entries not in both datasets}
+```{r rename variables in intial datasets}
+outcomes_renamed <- outcomes%>%
+  rename("id"="Animal ID","name"="Name","outcomeDateTime"="DateTime","outcomeMonthYear"="MonthYear","dateOfBirth"="Date of Birth","outcomeType"="Outcome Type","outcomeSubtype"="Outcome Subtype","animalType"="Animal Type","outcomeSex"="Sex upon Outcome","outcomeAge"="Age upon Outcome","breed"="Breed","color"="Color")
 
-
+intakes_renamed <-intakes%>%
+  rename("id"="Animal ID","name"="Name","intakeDateTime"="DateTime","intakeMonthYear"="MonthYear","foundLocation"="Found Location","intakeType"="Intake Type","ointakeCondition"="Intake Condition","animalType"="Animal Type","intakeSex"="Sex upon Intake","intakeAge"="Age upon Intake","breed"="Breed","color"="Color")
 ```
-```{r combine datasets}
 
 
+```{r combine datasets only on entries in both}
+combined <- merge(intakes_renamed,outcomes_renamed,by=c("id"="id"))
+adoption_data <- combined
 ```
 
 
 
 ```{r make data tidy}
-
-
+adoption_data_tidy <-adoption_data%<%
+  p
 ```
 
 
