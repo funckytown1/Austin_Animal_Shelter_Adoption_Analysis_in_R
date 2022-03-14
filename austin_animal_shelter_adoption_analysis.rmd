@@ -8,6 +8,9 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+require(devtools)
+install_github("Displayr/flipTime")
+library(flipTime)
 ```
 
 ## Read Data
@@ -27,16 +30,55 @@ intakes_renamed <-intakes%>%
 
 
 ```{r combine datasets only on entries in both}
-combined <- merge(intakes_renamed,outcomes_renamed,by=c("id"="id"))
-adoption_data <- combined
+combined <- merge(intakes_renamed,outcomes_renamed,by=c("id"="id","name"="name","animalType"="animalType","breed"="breed","color"="color"))
+adoption_data_dirty <- combined
 ```
 
 
 
 ```{r make data tidy}
-adoption_data_tidy <-adoption_data%<%
-  p
+adoption_data_dirty
 ```
 
+```{r}
+ggplot(data = adoption_data_dirty, mapping = aes(x = animalType)) +
+  geom_bar()
+```
+remove non-cat/dogs
+```{r}
+adoption_data <- subset(adoption_data_dirty, animalType == "Cat" | animalType == "Dog" )
+```
+
+
+
+```{r}
+ggplot(data = adoption_data, mapping = aes(x = animalType)) +
+  geom_bar()
+```
+
+
+transform intakeAge and outcomeAge into numerical variables
+transform the dates into date variables
+
+```{r transform intakeAge, outcomeAge, dateOfBirth into date variables}
+adoption_data$intakeDateTime <- AsDateTime(adoption_data$intakeDateTime)
+adoption_data$outcomeDateTime <- AsDateTime(adoption_data$outcomeDateTime)
+adoption_data$dateOfBirth <- AsDate(adoption_data$dateOfBirth)
+adoption_data
+```
+
+split outcomeMonthYear and intakeMonthYear into separate Month Year variables
+```{r}
+```
+
+transform intakeAge and outcomeAge into numerical values
+```{r}
+```
+
+summarize intakeAge and outcomeAge
+```{r}
+```
+
+create plots for dates and ages
 
 Is it possible to predict an animals outcome type based on the data that an adoption center can verify when intaking an animal?
