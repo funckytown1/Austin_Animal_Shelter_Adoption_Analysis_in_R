@@ -167,7 +167,6 @@ adoption_data <- adoption_data %>%
       type == "years" ~"7+ years"
   ))
 
-
 ```
 
 ```{r crete duration bins}
@@ -310,7 +309,8 @@ ggplot(data = adoption_data, mapping = aes(x=timeBetweenIntakeAndOutcomeBins,fil
 
 
 ```{r}
-
+ggplot(data = adoption_data, mapping = aes(x=timeBetweenIntakeAndOutcome))+geom_boxplot() 
+ggplot(data = adoption_data, mapping = aes(x=timeBetweenIntakeAndOutcome))+geom_histogram() 
 ```
 
 
