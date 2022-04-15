@@ -190,6 +190,9 @@ adoption_data <- adoption_data %>%
       grepl("male",intakeSex,ignore.case = TRUE)~ "Male"))
 ```
 
+```{r remove animals without a gender }
+adoption_data <- subset(adoption_data, gender == "Male" | gender == "Female")
+```
 
 
 ```{r remove missing values}
@@ -201,19 +204,23 @@ ggplot(data = adoption_data, mapping = aes(x = animalType)) +
   geom_bar()
 ```
 
-remove non-cat/dogs
-```{r}
+Based on the very few number of non cat/dog animals I chose to remove non-cat/dogs from the dataset. 
+
+```{r remove non-cat/dogs}
 adoption_data <- subset(adoption_data, animalType == "Cat" | animalType == "Dog")
 ```
 
-```{r distribution of animal types}
+
+```{r distribution of dogs/cats by gender}
 ggplot(data = adoption_data, mapping = aes(x = animalType)) +
   geom_bar()
-
-ggplot(data = adoption_data, mapping = aes(x = animalType, fill=gender)) +
-  geom_bar(position="stack")
 ```
+Removing the other animals from the dataset gives us the distribution of dogs and cats seen above. We can see that there are about twice as many dogs in this dataset then there are cats.
 
+```{r distribution of dogs/cats by gender}
+ggplot(data = adoption_data, mapping = aes(x = animalType, fill=gender)) +geom_bar(position="stack")
+```
+Looking at the distribution of dogs and cats by gender we can see that there the genders seem to be distributed rather evenly across animal types
 
 
 ```{r intake count by month}
@@ -251,7 +258,7 @@ ggplot(data = adoption_data, mapping = aes(x = gender)) + scale_x_discrete(label
 ```
 
 
-
+```{r distribution of animal type by outcome type}
 positions <- c("Adoption","Died","Euthanasia", "Return to Owner","Transfer")
 
 ggplot(data = adoption_data, mapping = aes(x = outcomeType)) + scale_x_discrete(limits = positions, labels=wrap_format(8))+
@@ -259,14 +266,14 @@ ggplot(data = adoption_data, mapping = aes(x = outcomeType)) + scale_x_discrete(
 ```
 
 
-```{r}
+```{r intake age distibution}
 positions <- c("Less than 6 months","6 to 12 months", "1 to 3 years", "4 to 6 years", "7+ years")
 
 ggplot(data = adoption_data, mapping = aes(x = intakeAgeBins)) + scale_x_discrete(limits = positions) +
   geom_bar()
 ```
 
-```{r}
+```{r outcome age distribution}
 
 positions <- c("Less than 6 months","6 to 12 months", "1 to 3 years", "4 to 6 years", "7+ years")
 
@@ -274,20 +281,27 @@ ggplot(data = adoption_data, mapping = aes(x = outcomeAgeBins)) + scale_x_discre
   geom_bar()
 ```
 
-```{r}
-
-
+```{r distibution of time between intake and outcome}
 positions <- c("Less than 1 week","Less than 1 month", "1 to 3 months", "3 to 6 months", "6 to 12 months", "1+ years")
 ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(8)) +
   geom_bar()
+```
 
-ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(8)) +
-  geom_bar() + facet_wrap(~animalType)
-
+```{r distibution of time between intake and outcome by animal type}
+positions <- c("Less than 1 week","Less than 1 month", "1 to 3 months", "3 to 6 months", "6 to 12 months", "1+ years")
 ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(8)) +
   geom_bar() + facet_wrap(~animalType)
 ```
-```{r}
+
+```{r distibution of time between intake and outcome by gender}
+positions <- c("Less than 1 week","Less than 1 month", "1 to 3 months", "3 to 6 months", "6 to 12 months", "1+ years")
+ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(5)) +
+  geom_bar() + facet_wrap(~gender)
+```
+
+
+
+```{r distibution of time between intake and outcome by outcomeType}
 positions <- c("Less than 1 week","Less than 1 month", "1 to 3 months", "3 to 6 months", "6 to 12 months", "1+ years")
 
 
@@ -295,11 +309,10 @@ ggplot(data = adoption_data, mapping = aes(x=timeBetweenIntakeAndOutcomeBins,fil
 ```
 
 
-Pickup where we left off looking at the dates and and create a month variable as well as a year variable. Then conduct eda and then do a machine learning model on the data.
+```{r}
 
+```
 
-
-create plots for dates and ages
 
 
 
