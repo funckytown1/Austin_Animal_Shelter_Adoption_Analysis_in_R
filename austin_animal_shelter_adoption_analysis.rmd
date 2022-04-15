@@ -11,6 +11,10 @@ library(tidyverse)
 require(devtools)
 install_github("Displayr/flipTime")
 library(flipTime)
+library(stringr)
+library(scales)
+library(lubridate)
+library(ggfittext)
 ```
 
 ## Read Data
@@ -20,40 +24,26 @@ library(flipTime)
 intakes <- read_csv(here::here("data","Austin_Animal_Center_Intakes.csv"))
 outcomes <- read_csv(here::here("data","Austin_Animal_Center_Outcomes.csv"))
 ```
+
+
 ```{r rename variables in intial datasets}
 outcomes_renamed <- outcomes%>%
   rename("id"="Animal ID","name"="Name","outcomeDateTime"="DateTime","outcomeMonthYear"="MonthYear","dateOfBirth"="Date of Birth","outcomeType"="Outcome Type","outcomeSubtype"="Outcome Subtype","animalType"="Animal Type","outcomeSex"="Sex upon Outcome","outcomeAge"="Age upon Outcome","breed"="Breed","color"="Color")
 
 intakes_renamed <-intakes%>%
-  rename("id"="Animal ID","name"="Name","intakeDateTime"="DateTime","intakeMonthYear"="MonthYear","foundLocation"="Found Location","intakeType"="Intake Type","ointakeCondition"="Intake Condition","animalType"="Animal Type","intakeSex"="Sex upon Intake","intakeAge"="Age upon Intake","breed"="Breed","color"="Color")
+  rename("id"="Animal ID","name"="Name","intakeDateTime"="DateTime","intakeMonthYear"="MonthYear","foundLocation"="Found Location","intakeType"="Intake Type","intakeCondition"="Intake Condition","animalType"="Animal Type","intakeSex"="Sex upon Intake","intakeAge"="Age upon Intake","breed"="Breed","color"="Color")
 ```
 
 
 ```{r combine datasets only on entries in both}
 combined <- merge(intakes_renamed,outcomes_renamed,by=c("id"="id","name"="name","animalType"="animalType","breed"="breed","color"="color"))
-adoption_data_dirty <- combined
-```
-
-
-
-```{r make data tidy}
-adoption_data_dirty
-```
-
-```{r}
-ggplot(data = adoption_data_dirty, mapping = aes(x = animalType)) +
-  geom_bar()
-```
-remove non-cat/dogs
-```{r}
-adoption_data <- subset(adoption_data_dirty, animalType == "Cat" | animalType == "Dog" )
+adoption_data <- combined
 ```
 
 
 
 ```{r}
-ggplot(data = adoption_data, mapping = aes(x = animalType)) +
-  geom_bar()
+adoption_data
 ```
 
 
@@ -67,18 +57,251 @@ adoption_data$dateOfBirth <- AsDate(adoption_data$dateOfBirth)
 adoption_data
 ```
 
-split outcomeMonthYear and intakeMonthYear into separate Month Year variables
-```{r}
+
+```{r split outcomeMonthYear and intakeMonthYear into separate Month Year variables}
+adoption_data$intakeMonth <-month(AsDate(adoption_data$intakeMonthYear))
+adoption_data$intakeYear <-year(AsDate(adoption_data$intakeMonthYear))
+adoption_data$outcomeMonth <-month(AsDate(adoption_data$intakeMonthYear))
+adoption_data$outcomeYear <-year(AsDate(adoption_data$outcomeMonthYear))
 ```
 
+
+```{r get days between income and outcome}
+adoption_data$timeBetweenIntakeAndOutcome <- (as.Date(adoption_data$outcomeDateTime) - as.Date(adoption_data$intakeDateTime))
+```
+
+```{r remove observation where the time between intake and outcome is less than 0 days}
+adoption_data <- adoption_data%>%
+  filter(timeBetweenIntakeAndOutcome > 0)
+adoption_data
+```
+
+
+adoption_data%>%
+  mutate(intakeAgeYears = function_name(intakeAge))
 transform intakeAge and outcomeAge into numerical values
 ```{r}
+# 
+# 
+# ageStringToMonths <- function(ageString){
+#     if(grepl("month", ageString, fixed=TRUE)){
+#       ageInt <- as.double(str_extract(ageString,"[0-9]*"),base=0L)
+#     }else if(grepl("year", ageString, fixed=TRUE)){
+#       ageInt <- as.double(str_extract(ageString,"[0-9]*"),base=0L)
+#       ageInt <- ageInt*12
+#     }else{
+#       ageInt<- NULL
+#     }
+#   }
 ```
 
-summarize intakeAge and outcomeAge
-```{r}
+
+
+```{r create a varaiable for age at intake and outcome in months}
+# adoption_data <- adoption_data %>%
+#   mutate(
+#     intakeAgeBins = case_when(
+#       intakeAgeMonths == "months" ~ as.double(numb),
+#       intakeAgeMonths == "years" ~ 12*as.double(numb),
+#       intakeAgeMonths == "month" ~ as.double(numb),
+#       intakeAgeMonths == "year" ~ 12*as.double(numb),
+#       intakeAgeMonths == "days" ~ 0,
+#       intakeAgeMonths == "day" ~ 0
+#   ))
+# 
+# adoption_data <- adoption_data %>%
+#   mutate(
+#     outcomeAgeBins = case_when(
+#       intakeAgeMonths == "months" ~ as.double(numb),
+#       intakeAgeMonths == "years" ~ 12*as.double(numb),
+#       intakeAgeMonths == "month" ~ as.double(numb),
+#       intakeAgeMonths == "year" ~ 12*as.double(numb),
+#       intakeAgeMonths == "days" ~ 0,
+#       intakeAgeMonths == "day" ~ 0
+#   ))
+
 ```
+
+
+
+```{r remove dulpicate ids}
+#ids <- hashmap(keys=unique(adoption_data$id),values=0.0)
+
+#ids['A141142']
+  
+```
+
+```{r create age bins}
+
+adoption_data <- adoption_data %>%
+  separate(intakeAge, c("numb", "type")) %>% 
+  mutate(
+    intakeAgeBins = case_when(
+      type == "day" ~ "Less than 6 months",
+      type == "days" ~ "Less than 6 months",
+      type == "week" ~ "Less than 6 months",
+      type == "weeks" ~ "Less than 6 months",
+      type == "month" ~ "Less than 6 months",
+      type == "months" & strtoi(numb)< 6 ~ "Less than 6 months",
+      type == "months" ~ "6 to 12 months",
+      type == "year" ~ "1 to 3 years",
+      type == "years" & strtoi(numb) < 4 ~ "1 to 3 years",
+      type == "years" & strtoi(numb) < 7 ~"4 to 6 years",
+      type == "years" ~"7+ years"
+  ))
+
+adoption_data <- adoption_data %>%
+  separate(outcomeAge, c("numb", "type")) %>% 
+  mutate(
+    outcomeAgeBins = case_when(
+      type == "day" ~ "Less than 6 months",
+      type == "days" ~ "Less than 6 months",
+      type == "week" ~ "Less than 6 months",
+      type == "weeks" ~ "Less than 6 months",
+      type == "month" ~ "Less than 6 months",
+      type == "months" & strtoi(numb)< 6 ~ "Less than 6 months",
+      type == "months" ~ "6 to 12 months",
+      type == "year" ~ "1 to 3 years",
+      type == "years" & strtoi(numb) < 4 ~ "1 to 3 years",
+      type == "years" & strtoi(numb) < 7 ~"4 to 6 years",
+      type == "years" ~"7+ years"
+  ))
+
+
+```
+
+```{r crete duration bins}
+adoption_data <- adoption_data %>%
+  mutate(
+    timeBetweenIntakeAndOutcomeBins = case_when(
+      timeBetweenIntakeAndOutcome < 7 ~ "Less than 1 week",
+      timeBetweenIntakeAndOutcome < 30 ~ "Less than 1 month",
+      timeBetweenIntakeAndOutcome < 90  ~ "1 to 3 months",
+      timeBetweenIntakeAndOutcome < 180 ~ "3 to 6 months",
+      timeBetweenIntakeAndOutcome < 365 ~ "6 to 12 months",
+      timeBetweenIntakeAndOutcome >= 365  ~ "1+ years"))
+```
+
+```{r crete gender}
+adoption_data <- adoption_data %>%
+  mutate(
+    gender = case_when(
+      grepl("female",intakeSex,ignore.case = TRUE)~ "Female",
+      grepl("male",intakeSex,ignore.case = TRUE)~ "Male"))
+```
+
+
+
+```{r remove missing values}
+adoption_data[complete.cases(adoption_data),]
+```
+
+```{r distribution of animal types}
+ggplot(data = adoption_data, mapping = aes(x = animalType)) +
+  geom_bar()
+```
+
+remove non-cat/dogs
+```{r}
+adoption_data <- subset(adoption_data, animalType == "Cat" | animalType == "Dog")
+```
+
+```{r distribution of animal types}
+ggplot(data = adoption_data, mapping = aes(x = animalType)) +
+  geom_bar()
+
+ggplot(data = adoption_data, mapping = aes(x = animalType, fill=gender)) +
+  geom_bar(position="stack")
+```
+
+
+
+```{r intake count by month}
+positions = c(1,2,3,4,5,6,7,8,9,10,11,12)
+ggplot(data = adoption_data, mapping = aes(x = intakeMonth)) +  scale_x_discrete(limits = positions)+
+  geom_bar()
+
+```
+
+```{r outcome count by month}
+positions = c(1,2,3,4,5,6,7,8,9,10,11,12)
+ggplot(data = adoption_data, mapping = aes(x = outcomeMonth)) +  scale_x_discrete(limits = positions)+
+  geom_bar()
+```
+
+```{r distribution of intakeTypes}
+ggplot(data = adoption_data, mapping = aes(x = intakeType)) +
+  geom_bar()
+```
+
+
+```{r distribution of outcome types}
+ggplot(data = adoption_data, mapping = aes(x = outcomeType)) + scale_x_discrete(labels=wrap_format(10))+
+  geom_bar()
+```
+
+```{r distribution of intaketypes split by outcome type}
+ggplot(data = adoption_data, mapping = aes(x=intakeType,fill=outcomeType))+geom_bar(position="dodge") +scale_x_discrete( labels=wrap_format(8))
+```
+
+
+```{r distribution of gender by outcome type}
+ggplot(data = adoption_data, mapping = aes(x = gender)) + scale_x_discrete(labels=wrap_format(8))+
+  geom_bar() + facet_wrap(~outcomeType)
+```
+
+
+
+positions <- c("Adoption","Died","Euthanasia", "Return to Owner","Transfer")
+
+ggplot(data = adoption_data, mapping = aes(x = outcomeType)) + scale_x_discrete(limits = positions, labels=wrap_format(8))+
+  geom_bar() + facet_wrap(~animalType) 
+```
+
+
+```{r}
+positions <- c("Less than 6 months","6 to 12 months", "1 to 3 years", "4 to 6 years", "7+ years")
+
+ggplot(data = adoption_data, mapping = aes(x = intakeAgeBins)) + scale_x_discrete(limits = positions) +
+  geom_bar()
+```
+
+```{r}
+
+positions <- c("Less than 6 months","6 to 12 months", "1 to 3 years", "4 to 6 years", "7+ years")
+
+ggplot(data = adoption_data, mapping = aes(x = outcomeAgeBins)) + scale_x_discrete(limits = positions) +
+  geom_bar()
+```
+
+```{r}
+
+
+positions <- c("Less than 1 week","Less than 1 month", "1 to 3 months", "3 to 6 months", "6 to 12 months", "1+ years")
+ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(8)) +
+  geom_bar()
+
+ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(8)) +
+  geom_bar() + facet_wrap(~animalType)
+
+ggplot(data = adoption_data, mapping = aes(x = timeBetweenIntakeAndOutcomeBins)) + scale_x_discrete(limits = positions, labels=wrap_format(8)) +
+  geom_bar() + facet_wrap(~animalType)
+```
+```{r}
+positions <- c("Less than 1 week","Less than 1 month", "1 to 3 months", "3 to 6 months", "6 to 12 months", "1+ years")
+
+
+ggplot(data = adoption_data, mapping = aes(x=timeBetweenIntakeAndOutcomeBins,fill=outcomeType))+ scale_x_discrete(limits = positions, labels=wrap_format(8))+geom_bar(position="dodge") 
+```
+
+
+Pickup where we left off looking at the dates and and create a month variable as well as a year variable. Then conduct eda and then do a machine learning model on the data.
+
+
 
 create plots for dates and ages
+
+
+
 
 Is it possible to predict an animals outcome type based on the data that an adoption center can verify when intaking an animal?
